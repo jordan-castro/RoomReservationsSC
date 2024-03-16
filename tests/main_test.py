@@ -93,7 +93,6 @@ def test_delete_reservation(rr):
     assert rr.getReservationsForLength(1) == 2, "Reservations For Length is not 2"
     rr.deleteReservation(1, 1, {'from': accounts[0]})
     assert rr.getReservationsForLength(1) == 1, "Reservations length is not 1"
-    # assert rr.getReservationsLength() == 2, "Reservations length it not 2"
 
 
 def test_delete_reservation_fail(rr):
