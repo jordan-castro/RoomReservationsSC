@@ -91,7 +91,7 @@ contract RoomReservations is Ownable {
         Room memory newRoom = Room(
             _title,
             _physicalAddress,
-            rooms.length - 1,
+            rooms.length,
             _image,
             _price,
             _msgSender(),
@@ -154,7 +154,7 @@ contract RoomReservations is Ownable {
         // Add to list
         reservations.push(newReservation);
         // Add reservation to room
-        reservationsFor[roomId].push(reservations.length - 1);
+        reservationsFor[roomId].push(reservations.length);
     }
 
     /**
