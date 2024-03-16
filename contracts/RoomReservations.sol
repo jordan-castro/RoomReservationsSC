@@ -127,13 +127,16 @@ contract RoomReservations is Ownable {
         );
         // Only check if defined in the call.
         if (checkReserved) {
+            // For GAS efficiency, keep lookup local
+            uint256[] memory roomReservations = reservationsFor[roomId];
+            uint256 roomReservationsLength = roomReservations.length; 
             Reservation memory r;
             // Check room is not currently reserved
-            for (uint256 i = 0; i < reservationsFor[roomId].length; i++) {
-                r = reservations[reservationsFor[roomId][i]];
+            for (uint256 i = 0; i < roomReservationsLength; i++) {
+                r = reservations[roomReservations[i]];
                 require(
                     startDate > r.endDate || endDate < r.startDate,
-                    "RoomReservations: This room is already reserved during this date."
+                    "RoomReservations: This room is already reserved during this date"
                 );
             }
             // Drop r from memory
