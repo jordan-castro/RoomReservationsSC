@@ -1,15 +1,21 @@
 // ON CONTRACT = updateRoomReservationStatus()
 'use client';
 
+import { useRef } from "react";
 import BaseModal from "./base";
+import connectToSmartContract from "@/utils/contract";
+
+declare const window:any;
 
 export default function ChangeRoomStatusModal() {
+    const container: any = useRef(null);
+
     return (
         <BaseModal
             title="Change Room Status"
             body={
                 (
-                    <div>
+                    <div ref={container}>
                         <div className="mb-3">
                             <label htmlFor="roomId" className="form-label">Room ID</label>
                             <input type="number" className="form-control" id="roomId" name="roomId" aria-describedby="roomIdHelp" />
@@ -24,7 +30,31 @@ export default function ChangeRoomStatusModal() {
             }
             modalId="changeRoomStatusModal"
             posButtonTitle="Change"
-            onPos={() => { console.log("Change room status"); }}
+            onPos={async () => {
+                // Check we have provider
+                if (window.provider === undefined) {
+                    alert("No Wallet provider avaialable");
+                    return;
+                } 
+
+                // VALUES
+                const values = {
+                    roomId: container.current.querySelector("#roomId"),
+                    canReserve: container.current.querySelector("#canReserve")
+                };
+
+                // PRIVATE AND PUBLIC
+                const signer = await window.provider.getSigner()
+                const contract = connectToSmartContract(signer);
+
+                contract.updateRoomReservationStatus(Number(values.roomId.value), values.canReserve.checked).then(async (value) => {
+                    await value.wait();
+                    alert("Room reservation status changed.");
+                    values.roomId.value = "";
+                }).catch((reason) => {
+                    alert(reason);
+                });
+            }}
         />
     );
 }

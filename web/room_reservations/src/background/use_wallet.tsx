@@ -1,16 +1,17 @@
 "use client";
 
 import React from "react";
-import {isConnected, connectWallet} from "./connect_wallet";
+import {isConnected, connectWallet} from "@/utils/connect_wallet";
 
 declare const window: any;
 
 export default function UseWallet() {
     React.useEffect(() => {
-        if (!isConnected()) {
-            // Connect
-            connectWallet();
-        }
+        connectWallet().then((value) => {
+            if (value !== undefined) {
+                window.provider = value;
+            }
+        });
     });
 
     return (

@@ -1,14 +1,20 @@
 'use client';
 
+import { useRef } from "react";
 import BaseModal from "./base";
+import connectToSmartContract from "@/utils/contract";
+
+declare const window: any;
 
 export default function DeleteReservationModal() {
+    const container: any = useRef(null);
+
     return (
         <BaseModal
             title="Delete a Reservation"
             body={
                 (
-                    <div>
+                    <div ref={container}>
                         <div className="mb-3">
                             <label htmlFor="roomId" className="form-label">Room ID</label>
                             <input type="number" className="form-control" id="roomId" name="roomId" aria-describedby="roomIdHelp" />
@@ -24,7 +30,35 @@ export default function DeleteReservationModal() {
             }
             modalId="deleteReservationModal"
             posButtonTitle="Delete"
-            onPos={() => { console.log("Delete Reservation"); }}
+            onPos={async () => {
+                // Check we have provider
+                if (window.provider === undefined) {
+                    alert("No Wallet provider avaialable");
+                    return;
+                }
+
+                // VALUES
+                const values = {
+                    roomId: container.current.querySelector("#roomId"),
+                    reservationId: container.current.querySelector("#reservationId"),
+                };
+
+                // PRIVATE AND PUBLIC
+                const signer = await window.provider.getSigner();
+                const contract = connectToSmartContract(signer);
+
+                // Call
+                contract.deleteReservation(Number(values.roomId.value), Number(values.reservationId.value)).then(async (value) => {
+                    await value.wait();
+                
+                    alert("Reservation has been deleted.");
+
+                    values.roomId.value = "";
+                    values.reservationId.value = "";
+                }).catch((reason) => {
+                    alert(reason);
+                })
+            }}
         />
     );
 }

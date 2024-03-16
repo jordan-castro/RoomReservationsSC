@@ -1,3 +1,6 @@
+// Import everything
+import { ethers } from "ethers";
+
 /**
  * Chequea si un wallet esta connectado.
  * 
@@ -23,24 +26,24 @@ declare const window: any;
  * 
  * @returns {Web3 | boolean}
  */
-export async function connectWallet() {
-    if (window.ethereum) {
-        try {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        if (accounts.length > 0) {
-            // Set el session storage
-            sessionStorage.setItem('connected', 'true');
-            // Set current wallet storage
-            sessionStorage.setItem('wallet', accounts[0]);
-            return accounts[0];
-        } else {
-            return false;
-        }
-        } catch (error) {
-        return false;
-        }
+export async function connectWallet(): Promise<ethers.BrowserProvider | undefined> {
+    let provider;
+    // let signer;
+    if (window.ethereum == null) {
+        console.log("Metmask is not installed, using read only defaults.");
+        return undefined;
+        // provider = ethers.getDefaultProvider();
     } else {
-        return false;
+        // Connect to the MetaMask EIP-1193 object. This is a standard
+        // protocol that allows Ethers access to make all read-only
+        // requests through MetaMask.
+        provider = new ethers.BrowserProvider(window.ethereum)
+        
+        return provider;
+        // // It also provides an opportunity to request access to write
+        // // operations, which will be performed by the private key
+        // // that MetaMask manages for the user.
+        // signer = await provider.getSigner();
     }
 }
 

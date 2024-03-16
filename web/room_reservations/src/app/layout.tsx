@@ -3,11 +3,12 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 
 import AddRoomModal from "@/modals/addRoom";
-import UseWallet from "@/utils/use_wallet";
+import UseWallet from "@/background/use_wallet";
 import MakeReservationModal from "@/modals/makeReservation";
 import MakePaymentModal from "@/modals/makePayment";
 import DeleteReservationModal from "@/modals/deleteReservation";
 import ChangeRoomStatusModal from "@/modals/changeRoomStatus";
+import UseContract from "@/background/use_contract";
 
 const inter = Inter({ subsets: ["latin"] });
 
