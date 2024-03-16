@@ -37,11 +37,36 @@ contract RoomReservations is AccessControl {
     mapping(uint256 => uint256[]) private reservationsFor;
 
     // A list of all reservations (previous, current, future)
-    Reservation[] private reservations;
+    Reservation[] public reservations;
     // A list of all rooms
-    Room[] private rooms;
+    Room[] public rooms;
     // A list of all payments
-    Payment[] private payments;
+    Payment[] public payments;
+
+    constructor() {
+        rooms.push(Room(
+            "Room Zero",
+            "",
+            0,
+            "",
+            0,
+            address(this),
+            false
+        ));
+        reservations.push(Reservation(
+            address(this),
+            0,
+            0,
+            0,
+            true
+        ));
+        payments.push(Payment(
+            address(this),
+            address(this),
+            0,
+            0
+        ));
+    }
 
     // Make sure any ether sent will be kept by contract
     fallback() external payable {}
@@ -149,25 +174,25 @@ contract RoomReservations is AccessControl {
         @notice This handles payments.
         Lodges a new payment into our smart contract data.
         In order to receive payment you must use the withdraw() function.
-        @return bool 
     */
     function makePayment(
         uint256 reservationId
-    ) public payable reservationExists(reservationId) returns (bool) {
+    ) public payable reservationExists(reservationId) {
         // Check payment amout matches reservation
         require(
             rooms[reservations[reservationId].roomId].price == msg.value,
             "RoomReservations: msg.value does not match the room price."
         );
 
-        // Make payment
-        address payable payAdd = payable(owner());
-        (bool success, ) = payAdd.call{value: msg.value}("");
+        Reservation storage reservation = reservations[reservationId];
 
-        // If not successful return false
-        if (!success) {
-            return false;
-        }
+        // Get 5% of the value
+        uint256 contractFee = (5 / msg.value) * 100;
+        uint256 propertyFee = msg.value - contractFee;
+
+        // Make payments
+        payable(rooms[reservation.roomId].owner).transfer(propertyFee);
+        payable(address(this)).transfer(contractFee);
 
         // Add payment
         Payment memory newPayment = Payment(
@@ -179,9 +204,7 @@ contract RoomReservations is AccessControl {
         payments.push(newPayment);
 
         // Update .isPaid on reservation
-        reservations[reservationId].isPaid = true;
-
-        return true;
+        reservation.isPaid = true;
     }
 
     /**
@@ -196,13 +219,25 @@ contract RoomReservations is AccessControl {
         // Check the address calling this method is either
         // A. the owner of the room
         // B. the reserver of the reservation
-        Room memory room = rooms[roomId];
-        Reservation memory reservation = reservations[reservationId];
-
         require(
-            _msgSender() == room.owner || _msgSender() == reservation.reserver,
+            _msgSender() == rooms[roomId].owner ||
+                _msgSender() == reservations[reservationId].reserver,
             "RoomReservations: only the rooms owner or the reservations owner can delete this reservation."
         );
+
+        // Avoid multiple lookups
+        uint256[] storage reservationsInRoom = reservationsFor[roomId];
+
+        for (uint256 i = 0; i < reservationsInRoom.length; i++) {
+            // Once found, remove value
+            if (reservationsInRoom[i] == reservationId) {
+                reservationsInRoom[i] = reservationsInRoom[
+                    reservationsInRoom.length - 1
+                ];
+                reservationsInRoom.pop();
+                break;
+            }
+        }
     }
 
     /**
@@ -213,7 +248,7 @@ contract RoomReservations is AccessControl {
         uint256 roomId,
         bool status
     ) public roomExists(roomId) {
-        Room memory room = rooms[roomId];
+        Room storage room = rooms[roomId];
         // Check only the rooms owner is calling this method
         require(
             _msgSender() == room.owner,
@@ -227,6 +262,19 @@ contract RoomReservations is AccessControl {
         );
 
         // Update can reserve status
-        rooms[roomId].canReserve = status;
+        room.canReserve = status;
+    }
+
+    /* Getters */
+    function getRoomsLength() public view returns (uint256) {
+        return rooms.length;
+    }
+
+    function getReservationsLength() public view returns (uint256) {
+        return reservations.length;
+    }
+
+    function getPaymentsLength() public view returns (uint256) {
+        return payments.length;
     }
 }
