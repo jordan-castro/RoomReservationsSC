@@ -63,28 +63,28 @@ def test_make_reservation_success(rr):
     add_room(rr)
     add_room(rr)
     
-    rr.makeReservation(1, 0, 10, False)
-    rr.makeReservation(2, 0, 10, True)
-    rr.makeReservation(1, 11, 20, False)
+    rr.makeReservation(1, 0, 86500, False)
+    rr.makeReservation(2, 0, 86500, True)
+    rr.makeReservation(1, 11, 86500, False)
     assert rr.getReservationsLength() == count + 3, "Reservation count does not match."
 
 
 def test_make_reservation_fail(rr):
     add_room(rr)
     add_room(rr, can_reserve=False)
-    rr.makeReservation(1, 0, 10, False)
+    rr.makeReservation(1, 0, 86500, False)
     with pytest.raises(Exception):
-        rr.makeReservation(1, 0, 10, True)
+        rr.makeReservation(1, 0, 86500, True)
     with pytest.raises(Exception):
-        rr.makeReservation(129, 0, 10, False)
+        rr.makeReservation(129, 0, 86500, False)
     with pytest.raises(Exception):
-        rr.makeReservation(2, 0, 10, False)
+        rr.makeReservation(2, 0, 86500, False)
 
 
 def test_make_payment_success(rr):
     add_room(rr)
     before_balance = accounts[0].balance()
-    rr.makeReservation(1, 0, 10, False)
+    rr.makeReservation(1, 0, 86500, False)
     rr.makePayment(1, {'value': web3.toWei('10', 'ether'),})
 
     assert accounts[0].balance() + web3.toWei('10', 'ether') == before_balance, "Balance does not match"
@@ -93,7 +93,7 @@ def test_make_payment_success(rr):
 
 def test_make_payment_fail(rr):
     add_room(rr)
-    rr.makeReservation(1, 0, 10, False)
+    rr.makeReservation(1, 0, 86500, False)
 
     with pytest.raises(Exception):
         rr.makePayment(1, {'value': 100})
@@ -104,8 +104,8 @@ def test_make_payment_fail(rr):
 
 def test_delete_reservation(rr):
     add_room(rr)
-    rr.makeReservation(1, 0, 10, False)
-    rr.makeReservation(1, 11, 20, False)
+    rr.makeReservation(1, 0, 86500, False)
+    rr.makeReservation(1, 11, 86500, False)
     assert rr.getReservationsLength() == 3, "Reservations length is not 3"
     rr.deleteReservation(1, 1, {'from': accounts[0]})
     assert rr.getReservationsLength() == 2, "Reservations length it not 2"
@@ -113,12 +113,12 @@ def test_delete_reservation(rr):
 
 def test_delete_reservation_fail(rr):
     add_room(rr)
-    rr.makeReservation(1, 0, 10, False, {'from': accounts[1]})
+    rr.makeReservation(1, 0, 86500, False, {'from': accounts[1]})
     with pytest.raises(Exception):
         rr.deleteReservation(1, 1, {'from': accounts[2]})
     rr.deleteReservation(1, 1, {'from': accounts[1]})
     add_room(rr)
-    rr.makeReservation(2, 0, 10, False, {'from': accounts[1]})
+    rr.makeReservation(2, 0, 86500, False, {'from': accounts[1]})
     rr.deleteReservation(2, 1, {'from': accounts[0]})
 
-    rr.makeReservation(1, 0, 10, True)
+    rr.makeReservation(1, 0, 86500, True)

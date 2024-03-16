@@ -34,7 +34,7 @@ contract RoomReservations is Ownable {
     }
 
     // A mapping to track room reservations
-    mapping(uint256 => uint256[]) private reservationsFor;
+    mapping(uint256 => uint256[]) public reservationsFor;
 
     // A list of all reservations (previous, current, future)
     Reservation[] public reservations;
@@ -44,28 +44,9 @@ contract RoomReservations is Ownable {
     Payment[] public payments;
 
     constructor() {
-        rooms.push(Room(
-            "Room Zero",
-            "",
-            0,
-            "",
-            0,
-            address(this),
-            false
-        ));
-        reservations.push(Reservation(
-            address(this),
-            0,
-            0,
-            0,
-            true
-        ));
-        payments.push(Payment(
-            address(this),
-            address(this),
-            0,
-            0
-        ));
+        rooms.push(Room("Room Zero", "", 0, "", 0, address(this), false));
+        reservations.push(Reservation(address(this), 0, 0, 0, true));
+        payments.push(Payment(address(this), address(this), 0, 0));
     }
 
     // Make sure any ether sent will be kept by contract
@@ -139,6 +120,11 @@ contract RoomReservations is Ownable {
             rooms[roomId].canReserve,
             "RoomReservations: This room is not available."
         );
+        // Check endDate is greater than startDate
+        require(
+            endDate > startDate + 1 days,
+            "RoomReservations: The minimum time in a room is 1 day."
+        );
         // Only check if defined in the call.
         if (checkReserved) {
             Reservation memory r;
@@ -185,6 +171,11 @@ contract RoomReservations is Ownable {
         );
 
         Reservation storage reservation = reservations[reservationId];
+        // Check that reservation is not paid
+        require(
+            !reservation.isPaid,
+            "RoomReservations: Reservation is already paid"
+        );
 
         // Calculate fees
         uint256 propertyFee = (msg.value * 95) / 100;
@@ -279,5 +270,25 @@ contract RoomReservations is Ownable {
 
     function getPaymentsLength() public view returns (uint256) {
         return payments.length;
+    }
+
+    function getReservationsForLength(uint256 roomId) public view roomExists(roomId) returns (uint256) {
+        return reservationsFor[roomId].length;
+    }
+
+    function getReservationsFor(uint256 roomId) public view roomExists(roomId) returns (uint256[] memory) {
+        return reservationsFor[roomId];
+    }
+
+    function getRooms() public view returns (Room[] memory) {
+        return rooms;
+    }
+    
+    function getReservations() public view returns (Reservation[] memory) {
+        return reservations;
+    }
+
+    function getPayments() public view returns (Payment[] memory) {
+        return payments;
     }
 }
