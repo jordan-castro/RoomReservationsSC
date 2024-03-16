@@ -24,13 +24,6 @@ def test_add_room_increases_list_size(rr):
     before = rr.getRoomsLength()
     # Add room
     add_room(rr)
-    # rr.addRoom(
-    #     "Room Test", 
-    #     "1212 Street, City, State, Country", 
-    #     "https://i.natgeofe.com/n/548467d8-c5f1-4551-9f58-6817a8d2c45e/NationalGeographic_2572187.jpg?w=1272&h=848", 
-    #     web3.toWei(10, 'ether'),
-    #     True
-    # )
 
     after = rr.getRoomsLength()
 
@@ -40,16 +33,6 @@ def test_add_room_increases_list_size(rr):
 def test_add_room_has_correct_owner(rr):
     owner = accounts[1]
     add_room(rr, {'from': owner})
-    # rr.addRoom(
-    #     "Room test 2",
-    #     "other address",
-    #     "other image",
-    #     web3.toWei(10, 'ether'),
-    #     True,
-    #     {
-    #         "from": owner
-    #     }
-    # )
 
     # Get owner of room
     rooms_owner = rr.rooms(rr.getRoomsLength() - 1)[5]
