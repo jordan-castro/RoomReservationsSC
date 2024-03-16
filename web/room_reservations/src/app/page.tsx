@@ -11,19 +11,19 @@ export default async function Home() {
         </div>
         <div className="p-3"></div>
         <div className="row">
-          <button className="btn btn-primary">Make Reservation</button>
+          <button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#makeReservationModal">Make Reservation</button>
         </div>
         <div className="p-3"></div>
         <div className="row">
-          <button className="btn btn-primary">Make Payment</button>
+          <button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#makePaymentModal">Make Payment</button>
         </div>
         <div className="p-3"></div>
         <div className="row">
-          <button className="btn btn-primary">Delete Reservation</button>
+          <button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#deleteReservationModal">Delete Reservation</button>
         </div>
         <div className="p-3"></div>
         <div className="row">
-          <button className="btn btn-primary">Change Room Status</button>
+          <button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#changeRoomStatusModal">Change Room Status</button>
         </div>
         <div className="p-3"></div>
       </div>

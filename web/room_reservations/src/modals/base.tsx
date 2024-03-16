@@ -1,13 +1,15 @@
+
 import React, { ReactNode } from 'react';
 
 interface BaseModalProps {
     title: string;
     body: ReactNode;
-    onClick: () => void;
+    onPos: () => void;
+    posButtonTitle?: string;
     modalId: string;
 }
 
-const BaseModal: React.FC<BaseModalProps> = ({ title, body, onClick, modalId }) => {
+const BaseModal: React.FC<BaseModalProps> = ({ title, body, onPos, modalId, posButtonTitle }) => {
     return (
         <div id={modalId} className="modal" tabIndex={-1}>
             <div className="modal-dialog">
@@ -21,7 +23,7 @@ const BaseModal: React.FC<BaseModalProps> = ({ title, body, onClick, modalId }) 
                     </div>
                     <div className="modal-footer">
                         <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" className="btn btn-primary" onClick={onClick}>Save changes</button>
+                        <button type="button" className="btn btn-primary" onClick={onPos}>{posButtonTitle !== null ? posButtonTitle : "Save Changes"}</button>
                     </div>
                 </div>
             </div>
