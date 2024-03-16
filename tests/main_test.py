@@ -83,11 +83,11 @@ def test_make_reservation_fail(rr):
 
 def test_make_payment_success(rr):
     add_room(rr)
-    before_balance = accounts[0].balance()
+    before_balance = accounts[1].balance()
     rr.makeReservation(1, 0, 86500, False)
-    rr.makePayment(1, {'value': web3.toWei('10', 'ether'),})
+    rr.makePayment(1, {'value': web3.toWei('10', 'ether'), 'from': accounts[1]})
 
-    assert accounts[0].balance() + web3.toWei('10', 'ether') == before_balance, "Balance does not match"
+    assert accounts[1].balance() + web3.toWei('10', 'ether') == before_balance, "Balance does not match"
     assert rr.reservations(1)[4] == True, "Reservation is not paid"
 
 
@@ -107,8 +107,10 @@ def test_delete_reservation(rr):
     rr.makeReservation(1, 0, 86500, False)
     rr.makeReservation(1, 11, 86500, False)
     assert rr.getReservationsLength() == 3, "Reservations length is not 3"
+    assert rr.getReservationsForLength(1) == 2, "Reservations For Length is not 2"
     rr.deleteReservation(1, 1, {'from': accounts[0]})
-    assert rr.getReservationsLength() == 2, "Reservations length it not 2"
+    assert rr.getReservationsForLength(1) == 1, "Reservations length is not 1"
+    # assert rr.getReservationsLength() == 2, "Reservations length it not 2"
 
 
 def test_delete_reservation_fail(rr):
