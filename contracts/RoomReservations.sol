@@ -2,14 +2,14 @@
 
 pragma solidity ^0.8.20;
 
-import "./AccessControl.sol";
+import "./Ownable.sol";
 
 /**
     @title RoomReservations
     @author Jordan Castro
     @notice Smart Contract for creating, reserving, and paying for rooms on the Polygon Blockchain.
 */
-contract RoomReservations is AccessControl {
+contract RoomReservations is Ownable {
     struct Room {
         string title; // A custom title for the room
         string physicalAddress; // The physical address
@@ -186,18 +186,21 @@ contract RoomReservations is AccessControl {
 
         Reservation storage reservation = reservations[reservationId];
 
-        // Get 5% of the value
-        uint256 contractFee = (5 / msg.value) * 100;
-        uint256 propertyFee = msg.value - contractFee;
+        // Calculate fees
+        uint256 propertyFee = (msg.value * 95) / 100;
+        uint256 contractFee = msg.value - propertyFee;
+
+        // Owner address
+        address payable roomOwner = payable(rooms[reservation.roomId].owner);
 
         // Make payments
-        payable(rooms[reservation.roomId].owner).transfer(propertyFee);
-        payable(address(this)).transfer(contractFee);
+        roomOwner.transfer(propertyFee);
+        payable(owner()).transfer(contractFee);
 
         // Add payment
         Payment memory newPayment = Payment(
             _msgSender(),
-            owner(),
+            roomOwner,
             block.timestamp, // Right now
             reservationId
         );

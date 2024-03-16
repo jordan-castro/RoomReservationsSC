@@ -1,0 +1,105 @@
+{
+  "contracts": {
+    "RoomReservations": "f4dbbd3743600de4205037f5a00ff7c370c7af29"
+  },
+  "tests": {
+    "tests/main_test.py": {
+      "coverage": false,
+      "isolated": false,
+      "results": "....F.F.",
+      "sha1": "e4a6cc8a875f4541e7dcdeaeec9079a8211b6054",
+      "txhash": [
+        "1e4ff0999c463a812b6028536ac982715c59bd5b",
+        "8fabc38320fcd0e3ec99b35c88416c45b35b6a1d",
+        "995b7d90d745ae72c1614e4e2fc69ab0e5f29afc",
+        "b30d08410f1371c6f975a056b96fce7c679ddbe3",
+        "be748070f7281b183ef4c655ee61ad08cd8ddbe2",
+        "fcc44a54f8aa0078d37eb0d4df92f5d3af707771"
+      ]
+    }
+  },
+  "tx": {
+    "1e4ff0999c463a812b6028536ac982715c59bd5b": {
+      "RoomReservations": {
+        "1": [
+          [],
+          [],
+          []
+        ]
+      }
+    },
+    "8fabc38320fcd0e3ec99b35c88416c45b35b6a1d": {
+      "RoomReservations": {
+        "1": [
+          [
+            17
+          ],
+          [
+            34
+          ],
+          []
+        ]
+      }
+    },
+    "995b7d90d745ae72c1614e4e2fc69ab0e5f29afc": {
+      "RoomReservations": {
+        "1": [
+          [],
+          [],
+          []
+        ]
+      }
+    },
+    "b30d08410f1371c6f975a056b96fce7c679ddbe3": {
+      "RoomReservations": {
+        "0": [
+          [],
+          [],
+          []
+        ],
+        "1": [
+          [
+            9
+          ],
+          [
+            30,
+            31
+          ],
+          []
+        ]
+      }
+    },
+    "be748070f7281b183ef4c655ee61ad08cd8ddbe2": {
+      "RoomReservations": {
+        "1": [
+          [
+            3
+          ],
+          [
+            28
+          ],
+          []
+        ]
+      }
+    },
+    "fcc44a54f8aa0078d37eb0d4df92f5d3af707771": {
+      "RoomReservations": {
+        "1": [
+          [
+            17,
+            18,
+            19
+          ],
+          [
+            35,
+            36,
+            37
+          ],
+          [
+            34
+          ]
+        ]
+      }
+    }
+  }
+}
