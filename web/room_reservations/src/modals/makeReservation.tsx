@@ -60,6 +60,7 @@ export default function MakeReservationModal() {
                     await value.wait();
 
                     alert("Reservation has been made. Reservation ID is: #" + await contract.getReservationsLength())
+                    console.log(await contract.getReservationsFor(Number(values.roomId.value)));
 
                     values.roomId.value = "";
                     values.startDate.value = "";

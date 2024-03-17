@@ -50,6 +50,7 @@ export default function ChangeRoomStatusModal() {
                 contract.updateRoomReservationStatus(Number(values.roomId.value), values.canReserve.checked).then(async (value) => {
                     await value.wait();
                     alert("Room reservation status changed.");
+                    console.log(await contract.rooms(Number(values.roomId.value)));
                     values.roomId.value = "";
                 }).catch((reason) => {
                     alert(reason);

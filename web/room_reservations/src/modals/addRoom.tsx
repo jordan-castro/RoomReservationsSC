@@ -69,6 +69,7 @@ export default function AddRoomModal() {
                 await tx.wait();
 
                 alert("Room has been added. Room ID is: #" + await contract.getRoomsLength());
+                console.log(await contract.rooms(await contract.getRoomsLength() - BigInt(1)));
 
                 // Clear the values
                 values.roomTitle.value = "";

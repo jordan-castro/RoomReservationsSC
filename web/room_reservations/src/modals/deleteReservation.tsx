@@ -52,6 +52,7 @@ export default function DeleteReservationModal() {
                     await value.wait();
                 
                     alert("Reservation has been deleted.");
+                    console.log(await contract.getReservationsFor(Number(values.roomId.value)));
 
                     values.roomId.value = "";
                     values.reservationId.value = "";
