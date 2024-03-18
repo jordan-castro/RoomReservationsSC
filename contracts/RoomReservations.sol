@@ -85,16 +85,17 @@ contract RoomReservations is Ownable {
         string memory _physicalAddress,
         string memory _image,
         uint256 _price,
-        bool _canReserve
-    ) public {
+        bool _canReserve,
+        address roomOwner // Because our server acts as a broker of sorts
+    ) public onlyOwner {
         // Make a new room
         Room memory newRoom = Room(
             _title,
             _physicalAddress,
-            rooms.length,
+            rooms.length, // No - 1 because the room has not been added yet.
             _image,
             _price,
-            _msgSender(),
+            roomOwner,
             _canReserve
         );
 
@@ -113,16 +114,17 @@ contract RoomReservations is Ownable {
         uint256 roomId,
         uint256 startDate,
         uint256 endDate,
-        bool checkReserved // If false, it assumes you know that the dates are not currently already reserved.
-    ) public roomExists(roomId) {
+        bool checkReserved, // If false, it assumes you know that the dates are not currently already reserved.
+        address reserver // Because our server acts as a broker of sorts.
+    ) public onlyOwner roomExists(roomId) {
         // Check if the room can be reserved
         require(
             rooms[roomId].canReserve,
             "RoomReservations: This room is not available."
         );
-        // Check endDate is greater than startDate
+        // Check endDate is greater than startDate by atleast 1 day
         require(
-            endDate > startDate + 1 days,
+            endDate >= startDate + 1 days,
             "RoomReservations: The minimum time in a room is 1 day."
         );
         // Only check if defined in the call.
@@ -145,7 +147,7 @@ contract RoomReservations is Ownable {
 
         // Make a reservation
         Reservation memory newReservation = Reservation(
-            _msgSender(),
+            reserver,
             roomId,
             startDate,
             endDate,
@@ -154,7 +156,7 @@ contract RoomReservations is Ownable {
         // Add to list
         reservations.push(newReservation);
         // Add reservation to room
-        reservationsFor[roomId].push(reservations.length);
+        reservationsFor[roomId].push(reservations.length - 1);
     }
 
     /**
@@ -211,14 +213,15 @@ contract RoomReservations is Ownable {
     */
     function deleteReservation(
         uint256 roomId,
-        uint256 reservationId
-    ) public roomExists(roomId) reservationExists(reservationId) {
+        uint256 reservationId,
+        address deleter // Because our server acts as a broker of sorts
+    ) public onlyOwner roomExists(roomId) reservationExists(reservationId) {
         // Check the address calling this method is either
         // A. the owner of the room
         // B. the reserver of the reservation
         require(
-            _msgSender() == rooms[roomId].owner ||
-                _msgSender() == reservations[reservationId].reserver,
+            deleter == rooms[roomId].owner ||
+                deleter == reservations[reservationId].reserver,
             "RoomReservations: only the rooms owner or the reservations owner can delete this reservation."
         );
 
@@ -243,12 +246,13 @@ contract RoomReservations is Ownable {
     */
     function updateRoomReservationStatus(
         uint256 roomId,
-        bool status
-    ) public roomExists(roomId) {
+        bool status,
+        address from // Because our server acts as a broker of sorts
+    ) public onlyOwner roomExists(roomId) {
         Room storage room = rooms[roomId];
         // Check only the rooms owner is calling this method
         require(
-            _msgSender() == room.owner,
+            from == room.owner,
             "RoomReservations: only the rooms owner can update reservation status."
         );
         // Make sure that canReserve does not already equal status
