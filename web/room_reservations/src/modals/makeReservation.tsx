@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import BaseModal from "./base";
 import connectToSmartContract from "@/utils/contract";
+import makeReservation from "@/api/makeReservation";
 
 declare const window: any;
 
@@ -49,26 +50,24 @@ export default function MakeReservationModal() {
                 };
 
                 const signer = await window.provider.getSigner();
-                const contract = connectToSmartContract(signer);
-
-                contract.makeReservation(
+                
+                const resut = await makeReservation(
                     Number(values.roomId.value),
                     (new Date(values.startDate.value).getTime() / 1000),
                     (new Date(values.endDate.value).getTime() / 1000),
-                    true
-                ).then(async (value) => {
-                    await value.wait();
+                    await signer.getAddress()
+                );
 
-                    alert("Reservation has been made. Reservation ID is: #" + await contract.getReservationsLength())
-                    console.log(await contract.getReservationsFor(Number(values.roomId.value)));
+                if (!resut) {
+                    alert("Reservation failed");
+                    return;
+                }
 
-                    values.roomId.value = "";
-                    values.startDate.value = "";
-                    values.endDate.value = "";
-    
-                }).catch((reason) => {
-                    alert(reason);
-                });
+                alert("Reservation has been made. Check Reservations tab.");
+                // Clear values
+                values.roomId.value = "";
+                values.startDate.value = "";
+                values.endDate.value = "";
             }}
         />
     );

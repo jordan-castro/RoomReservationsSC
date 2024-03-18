@@ -7,12 +7,12 @@ declare const window: any;
 
 export default function UseWallet() {
     React.useEffect(() => {
-        connectWallet().then((value) => {
+        connectWallet().then(async (value) => {
             if (value !== undefined) {
                 window.provider = value;
             }
         });
-    });
+    }); 
 
     return (
         <div id="connectWalletInBackground"></div>

@@ -1,14 +1,24 @@
 'use client';
 
-import { useRef } from "react";
+import React, { useRef } from "react";
 import BaseModal from "./base";
 import { connectWallet } from "@/utils/connect_wallet";
 import connectToSmartContract from "@/utils/contract";
+import addRoom from "@/api/addRoom";
+import localImageB64 from "@/utils/local_image_b64";
 
 declare const window: any;
 
 export default function AddRoomModal() {
     const container:any = useRef(null);
+
+    // React.useState(async () => {
+    //     if (container.current !== null) {
+    //         const img = container.current.querySelector("#image");
+    //         const previewImg = container.current.querySelector("#preview");
+    //         previewImg.src= "data:image/png;base64, " + localImageB64(img.files[0]);
+    //     }        
+    // });
 
     return (
         <BaseModal
@@ -28,8 +38,18 @@ export default function AddRoomModal() {
                         </div>
                         <div className="mb-3">
                             <label htmlFor="image" className="form-label">Image</label>
-                            <input type="text" required className="form-control" id="image" name="image" aria-describedby="imageHelp" />
+                            <input type="file" required className="form-control" id="image" name="image" aria-describedby="imageHelp"
+                                onChange={async (e) => {
+                                    const preview = container.current.querySelector("#preview");
+                                    if (e.target.files === null) {
+                                        preview.src = "";
+                                    } else {
+                                        preview.src = "data:image/png;base64, " + await localImageB64(e.target.files![0]);
+                                    }
+                                }} 
+                            />
                             <div id="imageHelp" className="form-text">Images must be a URL, otherwise the Smart Contract becomes too expensive.</div>
+                            <img id="preview" width={200} height={200} />
                         </div>
                         <div className="mb-3">
                             <label htmlFor="price" className="form-label">Price in Wei</label>
@@ -55,27 +75,34 @@ export default function AddRoomModal() {
                 const values = {
                     roomTitle: container.current.querySelector("#roomTitle"),
                     physicalAddress: container.current.querySelector("#physicalAddress"),
-                    image: container.current.querySelector("#image"),
+                    image: container.current.querySelector("#image").files[0],
                     price: container.current.querySelector("#price"),
                     canReserve: container.current.querySelector("#canReserve")
                 };
-
                 const signer = await window.provider.getSigner();
-                const contract = connectToSmartContract(signer);
 
-                const tx = await contract.addRoom(values.roomTitle.value, values.physicalAddress.value, values.image.value, Number(values.price.value), values.canReserve.checked);
+                const result = await addRoom(
+                    values.roomTitle.value,
+                    values.physicalAddress.value,
+                    values.image,
+                    Number(values.price.value),
+                    values.canReserve.checked,
+                    await signer.getAddress()
+                );
 
-                // WAIT for transaction to finish
-                await tx.wait();
+                console.log(result);
 
-                alert("Room has been added. Room ID is: #" + await contract.getRoomsLength());
-                console.log(await contract.rooms(await contract.getRoomsLength() - BigInt(1)));
+                if (!result) {
+                    alert("Failed to add room. Please try again.");
+                    return;
+                }            
 
                 // Clear the values
                 values.roomTitle.value = "";
                 values.physicalAddress.value = "";
-                values.image.value = "";
                 values.price.values = "";
+
+                alert("Successfully added room. Please check the Rooms tab.");
             }}
             posButtonTitle="Add"
         />

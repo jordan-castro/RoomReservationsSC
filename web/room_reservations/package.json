@@ -2,6 +2,7 @@
   "name": "room_reservations",
   "version": "0.1.0",
   "private": true,
+  "author": "Jordan Castro",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

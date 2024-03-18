@@ -4,6 +4,7 @@
 import { useRef } from "react";
 import BaseModal from "./base";
 import connectToSmartContract from "@/utils/contract";
+import updateStatus from "@/api/updateStatus";
 
 declare const window:any;
 
@@ -45,16 +46,21 @@ export default function ChangeRoomStatusModal() {
 
                 // PRIVATE AND PUBLIC
                 const signer = await window.provider.getSigner()
-                const contract = connectToSmartContract(signer);
+                
+                const result = await updateStatus(
+                    Number(values.roomId.value),
+                    values.canReserve.checked,
+                    await signer.getAddress()
+                );
 
-                contract.updateRoomReservationStatus(Number(values.roomId.value), values.canReserve.checked).then(async (value) => {
-                    await value.wait();
-                    alert("Room reservation status changed.");
-                    console.log(await contract.rooms(Number(values.roomId.value)));
-                    values.roomId.value = "";
-                }).catch((reason) => {
-                    alert(reason);
-                });
+                if (!result) {
+                    alert("Error while changing room reservation status");
+                    return;
+                }
+
+                alert("Room reservation status changed. Check rooms tab");
+
+                values.roomId.value = "";
             }}
         />
     );

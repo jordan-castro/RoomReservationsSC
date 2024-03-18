@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import BaseModal from "./base";
 import connectToSmartContract from "@/utils/contract";
+import deleteReservation from "@/api/deleteReservation";
 
 declare const window: any;
 
@@ -45,20 +46,23 @@ export default function DeleteReservationModal() {
 
                 // PRIVATE AND PUBLIC
                 const signer = await window.provider.getSigner();
-                const contract = connectToSmartContract(signer);
 
-                // Call
-                contract.deleteReservation(Number(values.roomId.value), Number(values.reservationId.value)).then(async (value) => {
-                    await value.wait();
-                
-                    alert("Reservation has been deleted.");
-                    console.log(await contract.getReservationsFor(Number(values.roomId.value)));
+                const result = await deleteReservation(
+                    Number(values.roomId.value),
+                    Number(values.reservationId.value),
+                    await signer.getAddress()
+                );
 
-                    values.roomId.value = "";
-                    values.reservationId.value = "";
-                }).catch((reason) => {
-                    alert(reason);
-                })
+                if (!result) {
+                    alert("Error deleting reservation.");
+                    return;
+                }
+
+                alert("Reservation has been deleted. Check reservations");
+
+                // Clear values
+                values.roomId.value = "";
+                values.reservationId.value = "";
             }}
         />
     );
