@@ -49,7 +49,7 @@ export default function MakePaymentModal() {
                 contract.makePayment(Number(values.reservationId.value), {value: price}).then(async (value) => {
                     await value.wait();
                     alert("Payment has been made for reservation: #" + values.reservationId.value);
-                    console.log(await contract.payments(await contract.getPaymentsLength()));
+                    console.log(await contract.payments(await contract.getPaymentsLength() - 1));
                     values.reservationId.value = "";
                 }).catch((reason) => {
                     alert(reason);
