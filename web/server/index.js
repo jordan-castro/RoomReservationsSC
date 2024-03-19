@@ -111,6 +111,11 @@ app.get("/crawl_contract", async (req, res) => {
                 ${rooms[i][6]}
             )
             `;
+        } else {
+            await sql`
+                UPDATE Room 
+                SET can_reserve = ${rooms[i][6]}
+            `;
         }
     }
 
@@ -175,6 +180,11 @@ app.get("/crawl_contract", async (req, res) => {
     }
 
     res.send("Contract has been crawled and values updated.");
+});
+
+app.post("/contract/crawl", async (req, res) => {
+    get("http://localhost:3001/crawl_contract");
+    res.send("0");
 });
 
 // Add room

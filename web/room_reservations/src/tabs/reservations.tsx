@@ -37,7 +37,7 @@ export default function ReservationsTab() {
                 </thead>
                 <tbody>
                     {rooms.map((room: any, _) => (
-                        <tr>
+                        <tr key={room.id}>
                             <th scope="row">{room.reservation_id}</th>
                             <td>{room.reserver}</td>
                             <td>{room.room_id}</td>

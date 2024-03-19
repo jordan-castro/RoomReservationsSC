@@ -36,7 +36,7 @@ export default function RoomsTab() {
                 </thead>
                 <tbody>
                     {rooms.map((room:any, _) => (
-                        <tr>
+                        <tr key={room.id}>
                             <th scope="row">{room.room_id}</th>
                             <th scope="row">{room.title}</th>
                             <th scope="row">{room.physical_address}</th>

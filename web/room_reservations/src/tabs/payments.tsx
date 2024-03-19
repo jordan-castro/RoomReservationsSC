@@ -36,7 +36,7 @@ export default function PaymentsTab() {
                 </thead>
                 <tbody>
                     {rooms.map((room: any, _) => (
-                        <tr>
+                        <tr key={room.id}>
                             <th scope="row">{room.id}</th>
                             <td>{room.payer}</td>
                             <td>{room.payee}</td>
