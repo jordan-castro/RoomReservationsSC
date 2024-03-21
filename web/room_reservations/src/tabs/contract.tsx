@@ -22,6 +22,18 @@ export default function ContractTab() {
                 <button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#changeRoomStatusModal">Change Room Status</button>
             </div>
             <div className="p-3"></div>
+            <div className="row">
+                <button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">Add User</button>
+            </div>
+            <div className="p-3"></div>
+            <div className="row">
+                <button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createWalletModal">Create Wallet</button>
+            </div>
+            <div className="p-3"></div>
+            <div className="row">
+                <button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#showBalanceModal">Show Balance</button>
+            </div>
+            <div className="p-3"></div>
         </>
     );
 }

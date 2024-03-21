@@ -37,10 +37,10 @@ export default function MakeReservationModal() {
             modalId="makeReservationModal"
             posButtonTitle="Reserve"
             onPos={async () => {
-                if (window.provider === undefined) {
-                    alert("No Wallet provider avaialable");
-                    return;
-                }
+                // if (window.provider === undefined) {
+                //     alert("No Wallet provider avaialable");
+                //     return;
+                // }
 
                 // VALUES
                 const values = {

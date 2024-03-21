@@ -33,37 +33,41 @@ node index.js
 
 
 UI:
-- Add users button to authorize accounts
+- [x] Add users button to authorize accounts
     - Address
     - Return a key
-- Change statuts:
-    - Address & key
-- Delete resercation:
-    - Address & key
-- Add wallets
+- [x] Change statuts:
+    - [x] Address & key
+- [x] Delete resercation:
+    - [x] Address & key
+- [x] Add Room:
+    - [x] Address & key
+- [x] Add wallets
     - Public keys
     - Private Kyes
-- Show balance
+- [x] Show balance
 
 Smart Contract:
-- Create keys
-- Save keys associated with addresses
-- On addRoom:
+- [x] Create keys
+- [x] Save keys associated with addresses
+- [x] On addRoom:
     - Verify key account
-- On Change status:
+- [x] On Change status:
     - Verify key account
-- Delete reservation :
+- [x] Delete reservation:
     - Verify key account
 
 Server:
 - routes:
-    - createWallet
-    - verifyTransaction
-    - showBalance
-- user table:
+    - [x] createWallet
+    - [x] verifyTransaction
+    - [x] showBalance
+    - [x] addUser
+    - [x] getKey/{public_address}?secret=
+- [x] user table:
     - hold wallets
         - public
-        - private
-- auth keys:
+        - private [encrypted]
+- [x] auth keys:
     - public address
-    - secret key
+    - secret key [encrypted]

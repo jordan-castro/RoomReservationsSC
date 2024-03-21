@@ -25,6 +25,7 @@ contract RoomReservations is Ownable {
         uint256 startDate; // What day does the reservation start
         uint256 endDate; // What day does the reservation end
         bool isPaid; // Is the reservation paid?
+        bool wasDeleted; // Has this reservation been deleted?
     }
     struct Payment {
         address payer; // The address paying for the reservation
@@ -36,6 +37,9 @@ contract RoomReservations is Ownable {
     // A mapping to track room reservations
     mapping(uint256 => uint256[]) public reservationsFor;
 
+    // A mapping to track keys to addresses, only addresses with keys can interact
+    mapping(string => address) private secretKeys;
+
     // A list of all reservations (previous, current, future)
     Reservation[] public reservations;
     // A list of all rooms
@@ -45,7 +49,7 @@ contract RoomReservations is Ownable {
 
     constructor() {
         rooms.push(Room("Room Zero", "", 0, "", 0, address(this), false));
-        reservations.push(Reservation(address(this), 0, 0, 0, true));
+        reservations.push(Reservation(address(this), 0, 0, 0, true, false));
         payments.push(Payment(address(this), address(this), 0, 0));
     }
 
@@ -76,6 +80,17 @@ contract RoomReservations is Ownable {
     }
 
     /**
+        @dev Verify the key is valid for said address.
+    */
+    modifier keyIsValid(string memory key, address whom) {
+        require(
+            secretKeys[key] == whom,
+            "RoomReservations: Address does not have secret key."
+        );
+        _;
+    }
+
+    /**
         @dev add a new room from data to list and set map id. 
         The amount of wei is determined by the compiler
         @notice This is to add a new room.
@@ -86,8 +101,9 @@ contract RoomReservations is Ownable {
         string memory _image,
         uint256 _price,
         bool _canReserve,
-        address roomOwner // Because our server acts as a broker of sorts
-    ) public onlyOwner {
+        address roomOwner, // Because our server acts as a broker of sorts
+        string memory key
+    ) public onlyOwner keyIsValid(key, roomOwner) {
         // Make a new room
         Room memory newRoom = Room(
             _title,
@@ -131,7 +147,7 @@ contract RoomReservations is Ownable {
         if (checkReserved) {
             // For GAS efficiency, keep lookup local
             uint256[] memory roomReservations = reservationsFor[roomId];
-            uint256 roomReservationsLength = roomReservations.length; 
+            uint256 roomReservationsLength = roomReservations.length;
             Reservation memory r;
             // Check room is not currently reserved
             for (uint256 i = 0; i < roomReservationsLength; i++) {
@@ -151,6 +167,7 @@ contract RoomReservations is Ownable {
             roomId,
             startDate,
             endDate,
+            false,
             false
         );
         // Add to list
@@ -169,6 +186,11 @@ contract RoomReservations is Ownable {
     function makePayment(
         uint256 reservationId
     ) public payable reservationExists(reservationId) {
+        // Check reservation was not deleted
+        require(
+            !reservations[reservationId].wasDeleted,
+            "RoomReservations: Reservation was deleted."
+        );
         // Check payment amout matches reservation
         require(
             rooms[reservations[reservationId].roomId].price == msg.value,
@@ -214,19 +236,28 @@ contract RoomReservations is Ownable {
     function deleteReservation(
         uint256 roomId,
         uint256 reservationId,
-        address deleter // Because our server acts as a broker of sorts
-    ) public onlyOwner roomExists(roomId) reservationExists(reservationId) {
+        address deleter, // Because our server acts as a broker of sorts
+        string memory key
+    )
+        public
+        onlyOwner
+        keyIsValid(key, deleter)
+        roomExists(roomId)
+        reservationExists(reservationId)
+    {
         // Check the address calling this method is either
         // A. the owner of the room
         // B. the reserver of the reservation
         require(
-            deleter == rooms[roomId].owner ||
-                deleter == reservations[reservationId].reserver,
-            "RoomReservations: only the rooms owner or the reservations owner can delete this reservation."
+            deleter == rooms[roomId].owner,
+            // ||
+            //     deleter == reservations[reservationId].reserver,
+            "RoomReservations: only the rooms owner can delete this reservation."
         );
 
         // Avoid multiple lookups
         uint256[] storage reservationsInRoom = reservationsFor[roomId];
+        reservations[reservationId].wasDeleted = true;
 
         for (uint256 i = 0; i < reservationsInRoom.length; i++) {
             // Once found, remove value
@@ -247,8 +278,9 @@ contract RoomReservations is Ownable {
     function updateRoomReservationStatus(
         uint256 roomId,
         bool status,
-        address from // Because our server acts as a broker of sorts
-    ) public onlyOwner roomExists(roomId) {
+        address from, // Because our server acts as a broker of sorts
+        string memory key
+    ) public onlyOwner keyIsValid(key, from) roomExists(roomId) {
         Room storage room = rooms[roomId];
         // Check only the rooms owner is calling this method
         require(
@@ -266,6 +298,37 @@ contract RoomReservations is Ownable {
         room.canReserve = status;
     }
 
+    /**
+        @dev Sets key to address not address to key in mapping.
+        @notice Give access to a certain address based on a key.
+        Only one key per address.
+    */
+    function setSecretKey(address whom, string memory key) public onlyOwner {
+        // Can not set to 0 address
+        require(whom != address(0), "RoomReservations: Address is not valid.");
+        // Can not set key to new user.
+        require(
+            secretKeys[key] == address(0),
+            "RoomReservations: Key already exists."
+        );
+
+        // Do it
+        secretKeys[key] = whom;
+    }
+
+    /**
+        @dev sets secretKeys[key] = address(0).
+        @notice Removes a address secret key rights.
+    */
+    function removeSecretKey(string memory key) public onlyOwner {
+        require(
+            secretKeys[key] != address(0),
+            "RoomReservations: Key is already removed."
+        );
+
+        secretKeys[key] = address(0);
+    }
+
     /* Getters */
     function getRoomsLength() public view returns (uint256) {
         return rooms.length;
@@ -279,18 +342,22 @@ contract RoomReservations is Ownable {
         return payments.length;
     }
 
-    function getReservationsForLength(uint256 roomId) public view roomExists(roomId) returns (uint256) {
+    function getReservationsForLength(
+        uint256 roomId
+    ) public view roomExists(roomId) returns (uint256) {
         return reservationsFor[roomId].length;
     }
 
-    function getReservationsFor(uint256 roomId) public view roomExists(roomId) returns (uint256[] memory) {
+    function getReservationsFor(
+        uint256 roomId
+    ) public view roomExists(roomId) returns (uint256[] memory) {
         return reservationsFor[roomId];
     }
 
     function getRooms() public view returns (Room[] memory) {
         return rooms;
     }
-    
+
     function getReservations() public view returns (Reservation[] memory) {
         return reservations;
     }

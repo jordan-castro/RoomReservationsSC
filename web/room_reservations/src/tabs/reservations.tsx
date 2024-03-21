@@ -33,6 +33,7 @@ export default function ReservationsTab() {
                         <th scope="col">Start Date</th>
                         <th scope="col">End Date</th>
                         <th scope="col">Is Paid</th>
+                        <th scope="col">Was Deleted</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -42,8 +43,9 @@ export default function ReservationsTab() {
                             <td>{room.reserver}</td>
                             <td>{room.room_id}</td>
                             <td>{intToDate(room.start_date)}</td>
-                            <td>{intToDate  (room.end_date)}</td>
+                            <td>{intToDate(room.end_date)}</td>
                             <td>{room.is_paid ? "Yes" : "No"}</td>
+                            <td>{room.was_deleted ? "Yes": "No"}</td>
                         </tr>
                     ))}
                 </tbody>

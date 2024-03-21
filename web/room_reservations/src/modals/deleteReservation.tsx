@@ -17,6 +17,16 @@ export default function DeleteReservationModal() {
                 (
                     <div ref={container}>
                         <div className="mb-3">
+                            <label htmlFor="ownerAddress" className="form-label">Owner Address</label>
+                            <input type="text" required className="form-control" id="ownerAddress" name="ownerAddress" aria-describedby="ownerAddressHelp" />
+                            <div id="ownerAddressHelp" className="form-text">What is the owners address?</div>
+                        </div>
+                        <div className="mb-3">
+                            <label htmlFor="secretKey" className="form-label">Secret Key</label>
+                            <input type="text" required className="form-control" id="secretKey" name="secretKey" aria-describedby="secretKeyHelp" />
+                            <div id="secretKeyHelp" className="form-text">Your scret key to allow transactions?</div>
+                        </div>
+                        <div className="mb-3">
                             <label htmlFor="roomId" className="form-label">Room ID</label>
                             <input type="number" className="form-control" id="roomId" name="roomId" aria-describedby="roomIdHelp" />
                             <div id="roomId" className="form-text">The rooms ID</div>
@@ -32,25 +42,28 @@ export default function DeleteReservationModal() {
             modalId="deleteReservationModal"
             posButtonTitle="Delete"
             onPos={async () => {
-                // Check we have provider
-                if (window.provider === undefined) {
-                    alert("No Wallet provider avaialable");
-                    return;
-                }
+                // // Check we have provider
+                // if (window.provider === undefined) {
+                //     alert("No Wallet provider avaialable");
+                //     return;
+                // }
 
                 // VALUES
                 const values = {
+                    ownerAddress: container.current.querySelector("#ownerAddress"),
+                    secretKey: container.current.querySelector("#secretKey"),
                     roomId: container.current.querySelector("#roomId"),
                     reservationId: container.current.querySelector("#reservationId"),
                 };
 
                 // PRIVATE AND PUBLIC
-                const signer = await window.provider.getSigner();
+                // const signer = await window.provider.getSigner();
 
                 const result = await deleteReservation(
                     Number(values.roomId.value),
                     Number(values.reservationId.value),
-                    await signer.getAddress()
+                    values.ownerAddress.value,
+                    values.secretKey.value
                 );
 
                 if (!result) {
