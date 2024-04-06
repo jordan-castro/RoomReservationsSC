@@ -1,7 +1,14 @@
 # RoomReservations Backend Server
 
-- A local server
-- Local database - for faster loading
-- Gas fees should be handled by the owner
-- UI for rooms, reservations
-- Image uplad
+For reading user keys
+
+- user/secret/:public - for reading secret keys
+    - :public is public address
+    - args:
+        - secret : YOUR KEY
+
+- user/private/:public - For reading private keys
+    - :public is public address
+    - args:
+        - secret : YOUR KEY
+

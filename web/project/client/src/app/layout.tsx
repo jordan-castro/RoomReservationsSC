@@ -9,6 +9,9 @@ import MakePaymentModal from "@/modals/makePayment";
 import DeleteReservationModal from "@/modals/deleteReservation";
 import ChangeRoomStatusModal from "@/modals/changeRoomStatus";
 import UseContract from "@/background/use_contract";
+import CreateWalletModal from "@/modals/createWallet";
+import ShowBalanceModal from "@/modals/showBalance";
+import AddUserModal from "@/modals/addUser";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -48,6 +51,9 @@ export default function RootLayout({
         <MakePaymentModal />
         <DeleteReservationModal />
         <ChangeRoomStatusModal />
+        <CreateWalletModal />
+        <ShowBalanceModal />
+        <AddUserModal />
 
         {/* Backgrounds */}
         <UseWallet />

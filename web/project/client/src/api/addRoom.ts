@@ -6,7 +6,8 @@ export default async function addRoom(
     image: File, 
     price: number, 
     canReserve: boolean,
-    roomOwner: string
+    roomOwner: string,
+    key: string
 ):Promise<boolean> {
     const formData = new FormData();
 
@@ -16,6 +17,7 @@ export default async function addRoom(
     formData.append("price", price.toString());
     formData.append("canReserve", canReserve.toString());
     formData.append("roomOwner", roomOwner);
+    formData.append("key", key);
 
     const result = await fetch(server + "contract/addRoom", {
         method: "POST",

@@ -17,6 +17,11 @@ export default function MakeReservationModal() {
                 (
                     <div ref={container}>
                         <div className="mb-3">
+                            <label htmlFor="ownerAddress" className="form-label">Reserver Address</label>
+                            <input type="text" required className="form-control" id="ownerAddress" name="ownerAddress" aria-describedby="ownerAddressHelp" />
+                            <div id="ownerAddressHelp" className="form-text">What is the address of the reserver?</div>
+                        </div>
+                        <div className="mb-3">
                             <label htmlFor="roomId" className="form-label">Room ID</label>
                             <input type="number" className="form-control" id="roomId" name="roomId" aria-describedby="roomIdHelp" />
                             <div id="roomId" className="form-text">The rooms ID</div>
@@ -37,25 +42,27 @@ export default function MakeReservationModal() {
             modalId="makeReservationModal"
             posButtonTitle="Reserve"
             onPos={async () => {
-                if (window.provider === undefined) {
-                    alert("No Wallet provider avaialable");
-                    return;
-                }
+                // if (window.provider === undefined) {
+                //     alert("No Wallet provider avaialable");
+                //     return;
+                // }
 
                 // VALUES
                 const values = {
+                    ownerAddress: container.current.querySelector("#ownerAddress"),
                     roomId: container.current.querySelector("#roomId"),
                     startDate: container.current.querySelector("#startDate"),
                     endDate: container.current.querySelector("#endDate"),
                 };
 
-                const signer = await window.provider.getSigner();
-                
+                // const signer = await window.provider.getSigner();
+
                 const resut = await makeReservation(
                     Number(values.roomId.value),
                     (new Date(values.startDate.value).getTime() / 1000),
                     (new Date(values.endDate.value).getTime() / 1000),
-                    await signer.getAddress()
+                    values.ownerAddress.value
+                    // await signer.getAddress()
                 );
 
                 if (!resut) {
@@ -68,6 +75,9 @@ export default function MakeReservationModal() {
                 values.roomId.value = "";
                 values.startDate.value = "";
                 values.endDate.value = "";
+                values.ownerAddress.value = "";
+
+                document.getElementById("callReservations")?.click();
             }}
         />
     );

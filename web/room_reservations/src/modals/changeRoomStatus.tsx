@@ -68,6 +68,7 @@ export default function ChangeRoomStatusModal() {
                 alert("Room reservation status changed. Check rooms tab");
 
                 values.roomId.value = "";
+                document.getElementById("callRooms")?.click();
             }}
         />
     );

@@ -108,6 +108,7 @@ export default function AddRoomModal() {
                 values.price.values = "";
 
                 alert("Successfully added room. Please check the Rooms tab.");
+                document.getElementById("callRooms")?.click();
             }}
             posButtonTitle="Add"
         />

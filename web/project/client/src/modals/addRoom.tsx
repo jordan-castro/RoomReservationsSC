@@ -10,15 +10,7 @@ import localImageB64 from "@/utils/local_image_b64";
 declare const window: any;
 
 export default function AddRoomModal() {
-    const container:any = useRef(null);
-
-    // React.useState(async () => {
-    //     if (container.current !== null) {
-    //         const img = container.current.querySelector("#image");
-    //         const previewImg = container.current.querySelector("#preview");
-    //         previewImg.src= "data:image/png;base64, " + localImageB64(img.files[0]);
-    //     }        
-    // });
+    const container: any = useRef(null);
 
     return (
         <BaseModal
@@ -26,6 +18,16 @@ export default function AddRoomModal() {
             body={
                 (
                     <div ref={container}>
+                        <div className="mb-3">
+                            <label htmlFor="ownerAddress" className="form-label">Owner Address</label>
+                            <input type="text" required className="form-control" id="ownerAddress" name="ownerAddress" aria-describedby="ownerAddressHelp" />
+                            <div id="ownerAddressHelp" className="form-text">What is the owners address?</div>
+                        </div>
+                        <div className="mb-3">
+                            <label htmlFor="secretKey" className="form-label">Secret Key</label>
+                            <input type="text" required className="form-control" id="secretKey" name="secretKey" aria-describedby="secretKeyHelp" />
+                            <div id="secretKeyHelp" className="form-text">Your scret key to allow transactions?</div>
+                        </div>
                         <div className="mb-3">
                             <label htmlFor="roomTitle" className="form-label">Room title</label>
                             <input type="text" required className="form-control" id="roomTitle" name="roomTitle" aria-describedby="roomHelp" />
@@ -46,7 +48,7 @@ export default function AddRoomModal() {
                                     } else {
                                         preview.src = "data:image/png;base64, " + await localImageB64(e.target.files![0]);
                                     }
-                                }} 
+                                }}
                             />
                             <div id="imageHelp" className="form-text">Images must be a URL, otherwise the Smart Contract becomes too expensive.</div>
                             <img id="preview" width={200} height={200} />
@@ -65,21 +67,23 @@ export default function AddRoomModal() {
             }
             modalId="addRoomModal"
             onPos={async () => {
-                // Get provider
-                if (window.provider === undefined) {
-                    alert("No Wallet provider avaialable.");
-                    return;
-                }
+                // // Get provider
+                // if (window.provider === undefined) {
+                //     alert("No Wallet provider avaialable.");
+                //     return;
+                // }
 
                 // Get all values
                 const values = {
+                    ownerAddress: container.current.querySelector("#ownerAddress"),
+                    secretKey: container.current.querySelector("#secretKey"),
                     roomTitle: container.current.querySelector("#roomTitle"),
                     physicalAddress: container.current.querySelector("#physicalAddress"),
                     image: container.current.querySelector("#image").files[0],
                     price: container.current.querySelector("#price"),
-                    canReserve: container.current.querySelector("#canReserve")
+                    canReserve: container.current.querySelector("#canReserve"),
                 };
-                const signer = await window.provider.getSigner();
+                // const signer = await window.provider.getSigner();
 
                 const result = await addRoom(
                     values.roomTitle.value,
@@ -87,7 +91,8 @@ export default function AddRoomModal() {
                     values.image,
                     Number(values.price.value),
                     values.canReserve.checked,
-                    await signer.getAddress()
+                    values.ownerAddress.value,
+                    values.secretKey.value,
                 );
 
                 console.log(result);
@@ -95,7 +100,7 @@ export default function AddRoomModal() {
                 if (!result) {
                     alert("Failed to add room. Please try again.");
                     return;
-                }            
+                }
 
                 // Clear the values
                 values.roomTitle.value = "";
@@ -103,6 +108,7 @@ export default function AddRoomModal() {
                 values.price.values = "";
 
                 alert("Successfully added room. Please check the Rooms tab.");
+                document.getElementById("callRooms")?.click();
             }}
             posButtonTitle="Add"
         />

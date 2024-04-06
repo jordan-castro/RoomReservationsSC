@@ -1,15 +1,15 @@
 const express = require("express");
 const fs = require("node:fs");
 const multer = require("multer");
+const { get } = require("node:http");
+const path = require("node:path");
 
 const sql = require("./src/db/db").sql;
 const web3 = require("./src/web3/contract");
 const makeHash = require("./src/utils/hash").makeHash;
 const result = require("./src/utils/result");
-const path = require("node:path");
-const { smartQuery, doesExist } = require("./src/db/query");
-const { smartInsert } = require("./src/db/insert");
-const { get } = require("node:http");
+const rrcrypto = require("./src/utils/rrcrypto");
+const wallet = require("./src/web3/wallet");
 
 // const express = require("express");
 // const sql = require("./db/db");
@@ -43,6 +43,15 @@ const uploadImage = multer({
 
 // Intialize the DB by adding necessary tables and SCHEMA
 app.get("/initializedb", async (req, res) => {
+    // If the tables exists drop them
+    try {
+        await sql`
+        DROP TABLE room, reservation, payment;
+        `;
+    } catch (e) {
+        console.log(e);
+    }
+    // THESE TABLES ARE DECENTRILIZED
     await sql`CREATE TABLE IF NOT EXISTS Room (
         id SERIAL PRIMARY KEY,
         title TEXT,
@@ -60,7 +69,8 @@ app.get("/initializedb", async (req, res) => {
         room_id INTEGER,
         start_date INTEGER,
         end_date INTEGER,
-        is_paid BOOLEAN
+        is_paid BOOLEAN,
+        was_deleted BOOLEAN
     );`;
     await sql`CREATE TABLE IF NOT EXISTS Payment(
         id SERIAL PRIMARY KEY,
@@ -69,6 +79,19 @@ app.get("/initializedb", async (req, res) => {
         date_paid INTEGER,
         reservation_id INTEGER
     );`;
+
+    // THESE TABLES ARE CENTRALIZED
+    await sql`CREATE TABLE IF NOT EXISTS Wallet(
+        id SERIAL PRIMARY KEY,
+        public_key TEXT,
+        private_key TEXT
+    );`;
+    await sql`CREATE TABLE IF NOT EXISTS AuthKey(
+        id SERIAL PRIMARY KEY,
+        public_key TEXT,
+        secret_key TEXT
+    );
+    `;
 
     res.send("Tables created");
 });
@@ -80,18 +103,14 @@ app.get("/", (req, res) => {
 // This updates our internal DB
 app.get("/crawl_contract", async (req, res) => {
     const contract = web3.getContract(web3.getWallet());
+    get("http://localhost:3001/initializedb");
 
     // Rooms
     const rooms = await contract.getRooms();
     console.log(rooms);
 
     for (let i = 0; i < rooms.length; i++) {
-        const query = await sql`
-        SELECT * FROM Room WHERE room_id = ${rooms[i][2]};
-        `;
-
-        if (query.length == 0) {
-            await sql`
+        await sql`
             INSERT INTO Room (
                 title,
                 physical_address,
@@ -111,24 +130,21 @@ app.get("/crawl_contract", async (req, res) => {
                 ${rooms[i][6]}
             )
             `;
-        }
     }
 
     // Reservations
     const reservations = await contract.getReservations();
     for (let i = 0; i < reservations.length; i++) {
-        const query = await sql`
-        SELECT * FROM Reservation WHERE room_id = ${reservations[i][1]} AND start_date = ${reservations[i][2]} AND end_date = ${reservations[i][3]} AND reserver = ${reservations[i][0]};
-        `;
-        if (query.length == 0) {
-            await sql`
+        console.log(reservations[i]);
+        await sql`
             INSERT INTO Reservation (
                 reserver,
                 reservation_id,
                 room_id,
                 start_date,
                 end_date,
-                is_paid
+                is_paid,
+                was_deleted
             )
             VALUES (
                 ${reservations[i][0]},
@@ -136,28 +152,17 @@ app.get("/crawl_contract", async (req, res) => {
                 ${reservations[i][1]},
                 ${reservations[i][2]},
                 ${reservations[i][3]},
-                ${reservations[i][4]}
+                ${reservations[i][4]},
+                ${reservations[i][5]}
             )
-            `;
-        } else {
-            // Update
-            await sql`
-            UPDATE Reservation
-            SET is_paid = ${reservations[i][4]}
-            WHERE id = ${query[0].id};
-            `;
-        }
+        `;
     }
 
     // Payments
     const payments = await contract.getPayments();
     console.log(payments);
     for (let i = 0; i < payments.length; i++) {
-        const query = await sql`
-        SELECT * FROM Payment WHERE reservation_id = ${payments[i][3]} AND payer = ${payments[i][0]} AND payee = ${payments[i][1]} AND date_paid = ${payments[i][2]};
-        `;
-        if (query.length == 0) {
-            await sql`
+        await sql`
             INSERT INTO Payment (
                 payer,
                 payee,
@@ -171,10 +176,14 @@ app.get("/crawl_contract", async (req, res) => {
                 ${payments[i][3]}
             )
             `;
-        }
     }
 
     res.send("Contract has been crawled and values updated.");
+});
+
+app.post("/contract/crawl", async (req, res) => {
+    get("http://localhost:3001/crawl_contract");
+    res.send("0");
 });
 
 // Add room
@@ -186,6 +195,7 @@ app.post("/contract/addRoom", uploadImage.single("image"), async (req, res) => {
         || req.body.price === undefined
         || req.body.canReserve === undefined
         || req.body.roomOwner === undefined
+        || req.body.key === undefined
     ) {
         res.send(result.negative());
         return;
@@ -206,19 +216,41 @@ app.post("/contract/addRoom", uploadImage.single("image"), async (req, res) => {
         const contract = web3.getContract(wallet);
 
         // Sign the transaction for no GAS fees to the user
+        const imagePath = "http://localhost:3001/" + targetPath;
 
         contract.addRoom(
             req.body.roomTitle,
             req.body.physicalAddress,
-            "http://localhost:3001/" + targetPath,
+            imagePath,
             req.body.price,
             req.body.canReserve,
-            req.body.roomOwner
+            req.body.roomOwner,
+            req.body.key
         ).then(async (value) => {
             await value.wait();
             console.log("Room added");
+            const roomId = Number(await contract.getRoomsLength()) - 1;
 
-            get("http://localhost:3001/crawl_contract");
+            await sql`
+            INSERT INTO Room (
+                title,
+                physical_address,
+                room_id,
+                image,
+                price,
+                owner,
+                can_reserve
+            )
+            VALUES (
+                ${req.body.roomTitle},
+                ${req.body.physicalAddress},
+                ${roomId},
+                ${imagePath},
+                ${req.body.price},
+                ${req.body.roomOwner},
+                ${req.body.canReserve}
+            )
+            `;
 
             res.send(result.positive());
         }).catch((reason) => {
@@ -251,9 +283,30 @@ app.post("/contract/makeReservation", async (req, res) => {
         req.body.reserver
     ).then(async (value) => {
         await value.wait();
+        const reservationId = Number(await contract.getReservationsLength()) - 1;
         console.log("Reservation made");
-        get("http://localhost:3001/crawl_contract");
-        
+
+        await sql`
+        INSERT INTO reservation (
+            reserver,
+            reservation_id,
+            room_id,
+            start_date,
+            end_date,
+            is_paid,
+            was_deleted
+        ) VALUES (
+            ${req.body.reserver},
+            ${reservationId},
+            ${req.body.roomId},
+            ${req.body.startDate},
+            ${req.body.endDate},
+            false,
+            false
+        );
+        `;
+        // get("http://localhost:3001/crawl_contract");
+
         res.send(result.positive());
     }).catch((reason) => {
         console.log(reason);
@@ -266,6 +319,7 @@ app.post("/contract/deleteReservation", (req, res) => {
     if (req.body.roomId === undefined
         || req.body.reservationId === undefined
         || req.body.deleter === undefined
+        || req.body.key === undefined
     ) {
         res.send(result.negative());
         return;
@@ -277,11 +331,15 @@ app.post("/contract/deleteReservation", (req, res) => {
     contract.deleteReservation(
         req.body.roomId,
         req.body.reservationId,
-        req.body.deleter
+        req.body.deleter,
+        req.body.key
     ).then(async (value) => {
         await value.wait();
         console.log("Reservation deleted");
-        get("http://localhost:3001/crawl_contract");
+
+        await sql`
+        UPDATE reservation SET was_deleted = true WHERE reservation_id = ${req.body.reservationId};
+        `;
 
         res.send(result.positive());
     }).catch((reason) => {
@@ -295,6 +353,7 @@ app.post("/contract/updateStatus", (req, res) => {
     if (req.body.roomId === undefined
         || req.body.canReserve === undefined
         || req.body.from === undefined
+        || req.body.key === undefined
     ) {
         console.log(req.body);
         res.send(result.negative());
@@ -307,11 +366,15 @@ app.post("/contract/updateStatus", (req, res) => {
     contract.updateRoomReservationStatus(
         req.body.roomId,
         req.body.canReserve,
-        req.body.from
+        req.body.from,
+        req.body.key
     ).then(async (value) => {
         await value.wait();
         console.log("Room status updated");
-        get("http://localhost:3001/crawl_contract");
+        await sql`
+        UPDATE Room SET can_reserve = ${req.body.canReserve} WHERE room_id = ${req.body.roomId}
+        `;
+        // get("http://localhost:3001/crawl_contract");
 
         res.send(result.positive());
     }).catch((reason) => {
@@ -319,7 +382,147 @@ app.post("/contract/updateStatus", (req, res) => {
         res.send(result.negative(2));
     })
 
+});
+
+// Add users 
+app.post("/contract/addUser", (req, res) => {
+    if (req.body.ownerAddress === undefined
+        || req.body.secretKey === undefined
+    ) {
+        res.send(result.negative());
+        return;
+    }
+
+    const wallet = web3.getWallet();
+    const contract = web3.getContract(wallet);
+
+    contract.setSecretKey(
+        req.body.ownerAddress,
+        req.body.secretKey
+    ).then(async (value) => {
+        await value.wait();
+
+        // Key was added succesfully. Update DB
+        await sql`
+        INSERT INTO AuthKey (
+            public_key,
+            secret_key
+        )
+        VALUES (
+            ${req.body.ownerAddress},
+            ${rrcrypto.encrypt(req.body.secretKey)}
+        );
+        `;
+
+        res.send(result.positive());
+    }).catch((reason) => {
+        console.log(reason);
+        res.send(result.negative(2));
+    });
+});
+
+app.get("/contract/makePayment/:id", async (req, res) => {
+    const wallet = web3.getWallet();
+    const contract = web3.getContract(wallet);
+
+    try {
+        const paymentResult = await contract.payments(req.params.id);
+
+        await sql`
+        INSERT INTO Payment (
+            payer,
+            payee,
+            date_paid,
+            reservation_id
+        ) VALUES (
+            ${paymentResult[0]},
+            ${paymentResult[1]},
+            ${paymentResult[2]},
+            ${Number(paymentResult[3])}
+        )
+        `;
+
+        await sql`
+        UPDATE reservation SET is_paid = true WHERE reservation_id = ${Number(paymentResult[3])}
+        `;
+
+    } catch (e) {
+        console.log(e);
+        res.send(result.negative(2));
+    }
+
 })
+
+app.get("/user/secret/:public", async (req, res) => {
+    if (req.query.secret === undefined) {
+        res.send("No secret defined.");
+        return;
+    }
+
+    const query = await sql`
+    SELECT * FROM AuthKey WHERE public_key = ${req.params.public};
+    `;
+
+    if (query.length === 0) {
+        res.send("No user found");
+        return;
+    }
+
+    // Decrypt
+    const dresult = rrcrypto.decrypt(query[0].secret_key, req.query.secret);
+    res.send(result.positiveWith(dresult));
+});
+
+app.get("/user/private/:public", async (req, res) => {
+    if (req.query.secret === undefined) {
+        res.send("No secret defined");
+        return;
+    }
+
+    const query = await sql`
+    SELECT * FROM Wallet WHERE public_key = ${req.params.public}
+    `;
+
+    // Descrypt
+    const d = rrcrypto.decrypt(query[0].private_key, req.query.secret);
+    res.send(result.positiveWith(d));
+})
+
+app.get("/wallet/balance/:public", async (req, res) => {
+    const query = await sql`
+    SELECT * FROM Wallet WHERE public_key = ${req.params.public};
+    `;
+
+    if (query.length === 0) {
+        res.send(result.negative());
+        return;
+    }
+    // WEB3 provider
+    const provider = web3.getRPC();
+    provider.getBalance(req.params.public).then((value) => {
+        res.send(result.positiveWith(value.toString()));
+    }).catch((reason) => {
+        console.log(reason);
+        res.send(result.negative(2));
+    });
+});
+
+app.get("/wallet/create", async (req, res) => {
+    const newWallet = wallet.createWallet();
+    // add to DB
+    await sql`
+    INSERT INTO Wallet (
+        public_key,
+        private_key
+    )
+    VALUES (
+        ${newWallet.address},
+        ${rrcrypto.encrypt(newWallet.privateKey)}
+    )
+    `;
+
+    res.send(result.positiveWith({ publicKey: newWallet.address, privateKey: newWallet.privateKey }));
+});
 
 app.get('/db/rooms', async (req, res) => {
     try {

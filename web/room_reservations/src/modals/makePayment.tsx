@@ -59,6 +59,8 @@ export default function MakePaymentModal() {
 
                     // console.log(await contract.payments(await contract.getPaymentsLength() - 1));
                     values.reservationId.value = "";
+
+                    document.getElementById("callPayments")?.click();
                 }).catch((reason) => {
                     alert(reason);
                 });

@@ -76,6 +76,8 @@ export default function DeleteReservationModal() {
                 // Clear values
                 values.roomId.value = "";
                 values.reservationId.value = "";
+
+                document.getElementById("callReservations")?.click();
             }}
         />
     );

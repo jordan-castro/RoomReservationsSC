@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import BaseModal from "./base";
 import connectToSmartContract from "@/utils/contract";
+import server from "@/api/server";
 
 declare const window : any;
 
@@ -49,8 +50,17 @@ export default function MakePaymentModal() {
                 contract.makePayment(Number(values.reservationId.value), {value: price}).then(async (value) => {
                     await value.wait();
                     alert("Payment has been made for reservation: #" + values.reservationId.value);
-                    console.log(await contract.payments(await contract.getPaymentsLength() - 1));
+                    const id = Number(await contract.getPaymentsLength()) - 1;
+
+                    fetch(server + "contract/makePayment/" + id, {method: "GET"});
+
+                    // Recrawl the smart contract.
+                    // fetch(server + "crawl_contract", {method: "GET"});
+
+                    // console.log(await contract.payments(await contract.getPaymentsLength() - 1));
                     values.reservationId.value = "";
+
+                    document.getElementById("callPayments")?.click();
                 }).catch((reason) => {
                     alert(reason);
                 });

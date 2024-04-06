@@ -3,24 +3,7 @@
 import server from "@/api/server";
 import React, {useState, useEffect} from "react";
 
-export default function RoomsTab() {
-    const [rooms, setRooms] = useState([]);
-
-    useEffect(() => {
-        fetchData();
-    });
-
-    const fetchData = async () => {
-        const response = await fetch(server + "db/rooms");
-        const json = await response.json();
-
-        if (json.result === 1 || json.result === 2) {
-            return;
-        }
-
-        setRooms(json.result);
-    };
-
+export default function RoomsTab({rooms}: React.PropsWithoutRef<{rooms: any}>) {
     return (
         <>
             <table className="table">
@@ -35,7 +18,7 @@ export default function RoomsTab() {
                     </tr>
                 </thead>
                 <tbody>
-                    {rooms.map((room:any, _) => (
+                    {rooms.map((room:any, _: any) => (
                         <tr key={room.id}>
                             <th scope="row">{room.room_id}</th>
                             <th scope="row">{room.title}</th>
