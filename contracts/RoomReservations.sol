@@ -10,9 +10,18 @@ import "./Ownable.sol";
     @notice Smart Contract for creating, reserving, and paying for rooms on the Polygon Blockchain.
 */
 contract RoomReservations is Ownable {
+    struct Property {
+        string name;
+        string logo;
+        string typeOf;
+        string physicalAddress; // The real world address of the property.
+        address owner; // The owner of the property.
+        string contactEmail;
+        string contactPhone;
+    }
     struct Room {
+        uint256 propertyId; // The id linking back to its property.
         string title; // A custom title for the room
-        string physicalAddress; // The physical address
         uint256 id; // The id of the room
         string image; // A image of the room
         uint256 price; // The price for the room
@@ -40,6 +49,11 @@ contract RoomReservations is Ownable {
     // A mapping to track keys to addresses, only addresses with keys can interact
     mapping(string => address) private secretKeys;
 
+    // A mapping of all rooms a property contains
+    mapping(uint256 => uint256[]) public roomsOfProperty;
+
+    // A list of all properties
+    Property[] public properties;
     // A list of all reservations (previous, current, future)
     Reservation[] public reservations;
     // A list of all rooms
@@ -48,7 +62,8 @@ contract RoomReservations is Ownable {
     Payment[] public payments;
 
     constructor() {
-        rooms.push(Room("Room Zero", "", 0, "", 0, address(this), false));
+        properties.push(Property("Property Zero", "", "", "", address(this), "", ""));
+        rooms.push(Room(0, "Room Zero", 0, "", 0, address(this), false));
         reservations.push(Reservation(address(this), 0, 0, 0, true, false));
         payments.push(Payment(address(this), address(this), 0, 0));
     }
@@ -56,6 +71,17 @@ contract RoomReservations is Ownable {
     // Make sure any ether sent will be kept by contract
     fallback() external payable {}
     receive() external payable {}
+
+    /**
+        @dev Verify the property exists and not out of bounds.
+    */
+    modifier propertyExists(uint256 propertyId) {
+        require (
+            propertyId >= 0 && propertyId < properties.length,
+            "RoomReservations: propertyId out of bounds."
+        );
+        _;
+    }
 
     /**
         @dev Verify the room exists and is not out of bounds
@@ -90,24 +116,58 @@ contract RoomReservations is Ownable {
         _;
     }
 
+    modifier isPropertyOwner(uint256 propertyId, address whom) {
+        require(
+            properties[propertyId].owner == whom,
+            "RoomReservations: Address is not owner"
+        );
+        _;
+    }
+
+    /**
+        @dev add a new property to the list.
+    */
+    function addProperty(
+        string memory name,
+        string memory logo,
+        string memory typeOf,
+        string memory _physicalAddress, 
+        address ownerOfProperty, 
+        string memory contactEmail,
+        string memory contactPhone,
+        string memory key
+    ) public onlyOwner keyIsValid(key, ownerOfProperty) {
+        Property memory property = Property(
+            name,
+            logo,
+            typeOf,
+            _physicalAddress,
+            ownerOfProperty,
+            contactEmail,
+            contactPhone
+        );
+
+        properties.push(property);
+    }
+
     /**
         @dev add a new room from data to list and set map id. 
         The amount of wei is determined by the compiler
         @notice This is to add a new room.
      */
     function addRoom(
+        uint256 propertyId,
         string memory _title,
-        string memory _physicalAddress,
         string memory _image,
         uint256 _price,
         bool _canReserve,
         address roomOwner, // Because our server acts as a broker of sorts
         string memory key
-    ) public onlyOwner keyIsValid(key, roomOwner) {
+    ) public onlyOwner keyIsValid(key, roomOwner) propertyExists(propertyId) {
         // Make a new room
         Room memory newRoom = Room(
+            propertyId,
             _title,
-            _physicalAddress,
             rooms.length, // No - 1 because the room has not been added yet.
             _image,
             _price,
@@ -117,6 +177,9 @@ contract RoomReservations is Ownable {
 
         // Add room to list
         rooms.push(newRoom);
+
+        // Push to properties.
+        roomsOfProperty[propertyId].push(rooms.length - 1);
     }
 
     /**
@@ -299,6 +362,62 @@ contract RoomReservations is Ownable {
     }
 
     /**
+        @dev Remove a room from the property.
+    */
+    function removeRoomFromProperty(
+        uint256 propertyId, 
+        uint256 roomId, 
+        address from, 
+        string memory key
+    ) public onlyOwner keyIsValid(key, from) propertyExists(propertyId) roomExists(roomId) {
+        require(
+            properties[propertyId].owner == from,
+            "RoomReservations: Owner is not the same"
+        );
+
+        // Avoid multiple lookups
+        uint256[] storage roomsInProperty = roomsOfProperty[propertyId];
+
+        for (uint256 i = 0; i < roomsInProperty.length; i++) {
+            // Once found, remove value
+            if (roomsInProperty[i] == roomId) {
+                roomsInProperty[i] = roomsInProperty[
+                    roomsInProperty.length - 1
+                ];
+                roomsInProperty.pop();
+                break;
+            }
+        }
+    }
+
+    /**
+        @dev add a room to a property.
+     */
+    function addRoomToProperty(
+        uint256 propertyId, 
+        uint256 roomId, 
+        address from, 
+        string memory key
+    ) public onlyOwner keyIsValid(key, from) propertyExists(propertyId) roomExists(roomId) {
+        // very from is owner of both property and room
+        require(
+            properties[propertyId].owner == from && rooms[roomId].owner == from,
+            "RoomReservations: Address must be owner"
+        );
+
+        // Check if room is already existsing 
+        uint256[] storage roomsInProperty = roomsOfProperty[propertyId];
+        for (uint256 i = 0; i < roomsInProperty.length; i++) {
+            if (roomsInProperty[i] == roomId) {
+                // Already exists, finish the function.
+                return;
+            }
+        }
+
+        roomsInProperty.push(roomId);
+    }
+
+    /**
         @dev Sets key to address not address to key in mapping.
         @notice Give access to a certain address based on a key.
         Only one key per address.
@@ -364,5 +483,55 @@ contract RoomReservations is Ownable {
 
     function getPayments() public view returns (Payment[] memory) {
         return payments;
+    }
+
+    function getRoomsOfPropertyLength(uint256 propertyId) public view propertyExists(propertyId) returns (uint256) {
+        return roomsOfProperty[propertyId].length;
+    }
+
+    function getRoomsOfProperty(uint256 propertyId) public view propertyExists(propertyId) returns (uint256[] memory) {
+        return roomsOfProperty[propertyId];
+    }
+
+    function getProperties() public view returns (Property[] memory) {
+        return properties;
+    }
+
+    function getPropertiesLength() public view returns (uint256) {
+        return properties.length;
+    }
+
+    // Setters
+
+    /**
+        @dev edit the property data.
+     */
+    function editPropertyData(
+        uint256 propertyId, 
+        string memory name,
+        string memory logo,
+        string memory typeOf,
+        string memory contactEmail,
+        string memory contactPhone,
+        address from, 
+        string memory key
+    ) public onlyOwner keyIsValid(key, from) propertyExists(propertyId) isPropertyOwner(propertyId, from) {
+        Property storage property = properties[propertyId];
+
+        if (bytes(name).length > 0) {
+            property.name = name;
+        }
+        if (bytes(logo).length > 0) {
+            property.logo = logo;
+        }
+        if (bytes(typeOf).length > 0) {
+            property.typeOf = typeOf;
+        }
+        if (bytes(contactEmail).length > 0) {
+            property.contactEmail = contactEmail;
+        }
+        if (bytes(contactPhone).length > 0) {
+            property.contactPhone = contactPhone;
+        }
     }
 }

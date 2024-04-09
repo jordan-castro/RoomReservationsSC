@@ -31,12 +31,60 @@
     "inputs": [
       {
         "internalType": "string",
-        "name": "_title",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "logo",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "typeOf",
         "type": "string"
       },
       {
         "internalType": "string",
         "name": "_physicalAddress",
+        "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "ownerOfProperty",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "contactEmail",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "contactPhone",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "key",
+        "type": "string"
+      }
+    ],
+    "name": "addProperty",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "propertyId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "_title",
         "type": "string"
       },
       {
@@ -74,6 +122,34 @@
     "inputs": [
       {
         "internalType": "uint256",
+        "name": "propertyId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "roomId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "key",
+        "type": "string"
+      }
+    ],
+    "name": "addRoomToProperty",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
         "name": "roomId",
         "type": "uint256"
       },
@@ -94,6 +170,54 @@
       }
     ],
     "name": "deleteReservation",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "propertyId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "logo",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "typeOf",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "contactEmail",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "contactPhone",
+        "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "key",
+        "type": "string"
+      }
+    ],
+    "name": "editPropertyData",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -136,6 +260,69 @@
   {
     "inputs": [],
     "name": "getPaymentsLength",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getProperties",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "logo",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "typeOf",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "physicalAddress",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "contactEmail",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "contactPhone",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct RoomReservations.Property[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getPropertiesLength",
     "outputs": [
       {
         "internalType": "uint256",
@@ -249,13 +436,13 @@
       {
         "components": [
           {
-            "internalType": "string",
-            "name": "title",
-            "type": "string"
+            "internalType": "uint256",
+            "name": "propertyId",
+            "type": "uint256"
           },
           {
             "internalType": "string",
-            "name": "physicalAddress",
+            "name": "title",
             "type": "string"
           },
           {
@@ -295,6 +482,44 @@
   {
     "inputs": [],
     "name": "getRoomsLength",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "propertyId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getRoomsOfProperty",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "propertyId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getRoomsOfPropertyLength",
     "outputs": [
       {
         "internalType": "uint256",
@@ -401,6 +626,83 @@
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "properties",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "logo",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "typeOf",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "physicalAddress",
+        "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "contactEmail",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "contactPhone",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "propertyId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "roomId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "key",
+        "type": "string"
+      }
+    ],
+    "name": "removeRoomFromProperty",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "string",
         "name": "key",
         "type": "string"
@@ -497,13 +799,13 @@
     "name": "rooms",
     "outputs": [
       {
-        "internalType": "string",
-        "name": "title",
-        "type": "string"
+        "internalType": "uint256",
+        "name": "propertyId",
+        "type": "uint256"
       },
       {
         "internalType": "string",
-        "name": "physicalAddress",
+        "name": "title",
         "type": "string"
       },
       {
@@ -530,6 +832,30 @@
         "internalType": "bool",
         "name": "canReserve",
         "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "roomsOfProperty",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",

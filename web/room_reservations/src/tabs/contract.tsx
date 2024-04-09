@@ -3,6 +3,10 @@ export default function ContractTab() {
         <>
             <div className="p-3"></div>
             <div className="row">
+                <button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPropertyModal">Add Property</button>
+            </div>
+            <div className="p-3"></div>
+            <div className="row">
                 <button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRoomModal">Add Room</button>
             </div>
             <div className="p-3"></div>

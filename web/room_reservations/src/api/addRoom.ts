@@ -1,8 +1,8 @@
 import server from "./server";
 
 export default async function addRoom(
+    propertyId: number,
     roomTitle: string, 
-    physicalAddress: string, 
     image: File, 
     price: number, 
     canReserve: boolean,
@@ -11,8 +11,8 @@ export default async function addRoom(
 ):Promise<boolean> {
     const formData = new FormData();
 
+    formData.append("propertyId", propertyId.toString());
     formData.append("roomTitle", roomTitle);
-    formData.append("physicalAddress", physicalAddress);
     formData.append("image", image);
     formData.append("price", price.toString());
     formData.append("canReserve", canReserve.toString());

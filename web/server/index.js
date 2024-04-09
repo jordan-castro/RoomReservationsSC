@@ -45,17 +45,30 @@ const uploadImage = multer({
 app.get("/initializedb", async (req, res) => {
     // If the tables exists drop them
     try {
-        await sql`
-        DROP TABLE room, reservation, payment;
-        `;
+        await sql`DROP TABLE Room`;
+    } catch (e) {
+        console.log(e);
+    }
+    try {
+        await sql`DROP TABLE Reservation`;
+    } catch (e) {
+        console.log(e);
+    }
+    try {
+        await sql`DROP TABLE Payment`;
+    } catch (e) {
+        console.log(e);
+    }
+    try {
+        await sql`DROP TABLE Property`;
     } catch (e) {
         console.log(e);
     }
     // THESE TABLES ARE DECENTRILIZED
     await sql`CREATE TABLE IF NOT EXISTS Room (
         id SERIAL PRIMARY KEY,
+        property_id INTEGER,
         title TEXT,
-        physical_address TEXT,
         room_id INTEGER,
         image TEXT,
         price INTEGER,
@@ -79,6 +92,17 @@ app.get("/initializedb", async (req, res) => {
         date_paid INTEGER,
         reservation_id INTEGER
     );`;
+    await sql`CREATE TABLE IF NOT EXISTS Property(
+        id SERIAL PRIMARY KEY,
+        name TEXT,
+        logo TEXT,
+        typeOf TEXT,
+        physicalAddress TEXT,
+        owner TEXT,
+        contactEmail TEXT,
+        contactPhone TEXT
+    );
+    `;
 
     // THESE TABLES ARE CENTRALIZED
     await sql`CREATE TABLE IF NOT EXISTS Wallet(
@@ -103,7 +127,33 @@ app.get("/", (req, res) => {
 // This updates our internal DB
 app.get("/crawl_contract", async (req, res) => {
     const contract = web3.getContract(web3.getWallet());
-    get("http://localhost:3001/initializedb");
+    // get("http://localhost:3001/initializedb");
+
+    // Properties
+    const properties = await contract.getProperties();
+    console.log(properties);
+
+    for (let i = 0; i < properties.length; i++) {
+        await sql`
+            INSERT INTO Property (
+                name,
+                logo,
+                typeOf,
+                physicalAddress,
+                owner,
+                contactEmail,
+                contactPhone
+            ) VALUES (
+                ${properties[i][0]},
+                ${properties[i][1]},
+                ${properties[i][2]},
+                ${properties[i][3]},
+                ${properties[i][4]},
+                ${properties[i][5]},
+                ${properties[i][6]}
+            );
+        `;
+    }
 
     // Rooms
     const rooms = await contract.getRooms();
@@ -112,8 +162,8 @@ app.get("/crawl_contract", async (req, res) => {
     for (let i = 0; i < rooms.length; i++) {
         await sql`
             INSERT INTO Room (
+                property_id,
                 title,
-                physical_address,
                 room_id,
                 image,
                 price,
@@ -186,11 +236,86 @@ app.post("/contract/crawl", async (req, res) => {
     res.send("0");
 });
 
+// Add property
+app.post("/contract/addProperty", uploadImage.single("image"), async (req, res) => {
+    // Make sure all required values are passed
+    if (req.body.name === undefined
+        || req.body.typeOf === undefined
+        || req.body.physicalAddress === undefined
+        || req.body.contactEmail === undefined
+        || req.body.contactPhone === undefined
+        || req.body.owner === undefined
+        || req.body.key === undefined
+        || req.file === undefined
+    ) {
+        res.send(result.negative());
+        return;
+    }
+
+    // Save the image in a local directory
+    const tempPath = req.file.path;
+    const fileName = makeHash(6);
+    console.log(fileName);
+    const targetPath = path.join("./images/" + fileName + path.extname(req.file.originalname).toLowerCase());
+    fs.rename(tempPath, targetPath, err => {
+        if (err) {
+            res.send(result.negative(3));
+            return;
+        }
+
+        const wallet = web3.getWallet();
+        const contract = web3.getContract(wallet);
+
+        // Sign the transaction
+        const imagePath = "http://localhost:3001/" + targetPath;
+
+        contract.addProperty(
+            req.body.name,
+            imagePath,
+            req.body.typeOf,
+            req.body.physicalAddress,
+            req.body.owner,
+            req.body.contactEmail,
+            req.body.contactPhone,
+            req.body.key
+        ).then(async (value) => {
+            await value.wait();
+            console.log("Property added");
+
+            await sql`
+            INSERT INTO Property (
+                name,
+                logo,
+                typeOf,
+                physicalAddress,
+                owner,
+                contactEmail,
+                contactPhone
+            )
+            VALUES (
+                ${req.body.name},
+                ${imagePath},
+                ${req.body.typeOf},
+                ${req.body.physicalAddress},
+                ${req.body.owner},
+                ${req.body.contactEmail},
+                ${req.body.contactPhone}
+            )
+            `;
+
+            res.send(result.positive());
+        }).catch((reason) => {
+            console.log(reason);
+            res.send(result.negative(2));
+        })
+    });
+});
+
 // Add room
 app.post("/contract/addRoom", uploadImage.single("image"), async (req, res) => {
     // Make sure all requires values are passed
-    if (req.body.roomTitle === undefined
-        || req.body.physicalAddress === undefined
+    if (req.body.propertyId === undefined
+        || req.body.roomTitle === undefined
         || req.file === undefined
         || req.body.price === undefined
         || req.body.canReserve === undefined
@@ -219,8 +344,8 @@ app.post("/contract/addRoom", uploadImage.single("image"), async (req, res) => {
         const imagePath = "http://localhost:3001/" + targetPath;
 
         contract.addRoom(
+            req.body.propertyId,
             req.body.roomTitle,
-            req.body.physicalAddress,
             imagePath,
             req.body.price,
             req.body.canReserve,
@@ -233,8 +358,8 @@ app.post("/contract/addRoom", uploadImage.single("image"), async (req, res) => {
 
             await sql`
             INSERT INTO Room (
+                property_id,
                 title,
-                physical_address,
                 room_id,
                 image,
                 price,
@@ -242,8 +367,8 @@ app.post("/contract/addRoom", uploadImage.single("image"), async (req, res) => {
                 can_reserve
             )
             VALUES (
+                ${req.body.propertyId}
                 ${req.body.roomTitle},
-                ${req.body.physicalAddress},
                 ${roomId},
                 ${imagePath},
                 ${req.body.price},
@@ -528,6 +653,19 @@ app.get('/db/rooms', async (req, res) => {
     try {
         const query = await sql`
         SELECT * FROM room;
+        `;
+
+        res.send(result.positiveWith(query));
+    } catch (err) {
+        console.log(err);
+        res.send(result.negative());
+    }
+});
+
+app.get('/db/properties', async (req, res) => {
+    try {
+        const query = await sql`
+        SELECT * FROM property;
         `;
 
         res.send(result.positiveWith(query));

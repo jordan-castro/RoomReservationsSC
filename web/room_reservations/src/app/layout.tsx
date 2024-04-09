@@ -12,6 +12,7 @@ import UseContract from "@/background/use_contract";
 import CreateWalletModal from "@/modals/createWallet";
 import ShowBalanceModal from "@/modals/showBalance";
 import AddUserModal from "@/modals/addUser";
+import AddPropertyModal from "@/modals/addProperty";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -54,6 +55,7 @@ export default function RootLayout({
         <CreateWalletModal />
         <ShowBalanceModal />
         <AddUserModal />
+        <AddPropertyModal />
 
         {/* Backgrounds */}
         <UseWallet />

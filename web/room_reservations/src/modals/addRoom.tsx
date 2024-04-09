@@ -2,8 +2,6 @@
 
 import React, { useRef } from "react";
 import BaseModal from "./base";
-import { connectWallet } from "@/utils/connect_wallet";
-import connectToSmartContract from "@/utils/contract";
 import addRoom from "@/api/addRoom";
 import localImageB64 from "@/utils/local_image_b64";
 
@@ -29,14 +27,14 @@ export default function AddRoomModal() {
                             <div id="secretKeyHelp" className="form-text">Your scret key to allow transactions?</div>
                         </div>
                         <div className="mb-3">
+                            <label htmlFor="propertyId" className="form-label">Property Id #</label>
+                            <input type="number" required className="form-control" id="propertyId" name="propertyId" aria-describedby="propertyIdHelp" />
+                            <div id="propertyIdHelp" className="form-text">Which property does this room belong to.</div>
+                        </div>
+                        <div className="mb-3">
                             <label htmlFor="roomTitle" className="form-label">Room title</label>
                             <input type="text" required className="form-control" id="roomTitle" name="roomTitle" aria-describedby="roomHelp" />
                             <div id="roomHelp" className="form-text">What special title do you want for your room?</div>
-                        </div>
-                        <div className="mb-3">
-                            <label htmlFor="physicalAddress" className="form-label">Physical Address</label>
-                            <input type="text" required className="form-control" id="physicalAddress" name="physicalAddress" aria-describedby="physicalAddressHelp" />
-                            <div id="physicalAddressHelp" className="form-text">What is your rooms physical address?</div>
                         </div>
                         <div className="mb-3">
                             <label htmlFor="image" className="form-label">Image</label>
@@ -67,18 +65,12 @@ export default function AddRoomModal() {
             }
             modalId="addRoomModal"
             onPos={async () => {
-                // // Get provider
-                // if (window.provider === undefined) {
-                //     alert("No Wallet provider avaialable.");
-                //     return;
-                // }
-
                 // Get all values
                 const values = {
                     ownerAddress: container.current.querySelector("#ownerAddress"),
                     secretKey: container.current.querySelector("#secretKey"),
+                    propertyId: container.current.querySelector("#propertyId"),
                     roomTitle: container.current.querySelector("#roomTitle"),
-                    physicalAddress: container.current.querySelector("#physicalAddress"),
                     image: container.current.querySelector("#image").files[0],
                     price: container.current.querySelector("#price"),
                     canReserve: container.current.querySelector("#canReserve"),
@@ -86,8 +78,8 @@ export default function AddRoomModal() {
                 // const signer = await window.provider.getSigner();
 
                 const result = await addRoom(
+                    Number(values.propertyId.value),
                     values.roomTitle.value,
-                    values.physicalAddress.value,
                     values.image,
                     Number(values.price.value),
                     values.canReserve.checked,
@@ -104,7 +96,6 @@ export default function AddRoomModal() {
 
                 // Clear the values
                 values.roomTitle.value = "";
-                values.physicalAddress.value = "";
                 values.price.values = "";
 
                 alert("Successfully added room. Please check the Rooms tab.");
